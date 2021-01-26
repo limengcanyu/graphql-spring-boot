@@ -4,9 +4,9 @@
  * Copyright (c) 2016 oEmbedler Inc. and Contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
- *  documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
- *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
- *  persons to whom the Software is furnished to do so, subject to the following conditions:
+ * documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+ * persons to whom the Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
  *
@@ -25,10 +25,22 @@ plugins {
     id 'net.researchgate.release' version "$LIB_RELEASE_PLUGIN_VER"
     id "org.springframework.boot" version "$LIB_SPRING_BOOT_VER" apply false
     id "com.jfrog.artifactory" version "4.15.1" apply false
+    id "org.sonarqube" version "3.0"
+    id "jacoco"
+}
+
+sonarqube {
+    properties {
+        property "sonar.projectKey", "graphql-java-kickstart_graphql-spring-boot"
+        property "sonar.organization", "graphql-java-kickstart"
+        property "sonar.host.url", "https://sonarcloud.io"
+    }
 }
 
 subprojects {
     apply plugin: 'idea'
+    apply plugin: 'jacoco'
+    apply plugin: 'org.sonarqube'
     apply plugin: 'java'
     apply plugin: 'java-library'
     apply plugin: 'maven-publish'
@@ -36,15 +48,16 @@ subprojects {
     apply plugin: "io.spring.dependency-management"
     apply plugin: 'com.jfrog.artifactory'
 
-    group  "$PROJECT_GROUP"
+    group "$PROJECT_GROUP"
 
     repositories {
-//        mavenLocal()
+        mavenLocal()
         mavenCentral()
         jcenter()
         maven { url "https://dl.bintray.com/graphql-java-kickstart/releases" }
-        maven { url "https://oss.jfrog.org/artifactory/oss-snapshot-local" }
         maven { url "https://repo.spring.io/libs-milestone" }
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+        maven { url "https://oss.jfrog.org/artifactory/oss-snapshot-local" }
     }
 
     dependencyManagement {
@@ -73,6 +86,18 @@ subprojects {
             showCauses true
             showExceptions true
             showStackTraces true
+        }
+    }
+
+    jacoco {
+        toolVersion = "0.8.7-SNAPSHOT"
+    }
+
+    jacocoTestReport {
+        reports {
+            xml.enabled = true
+            html.enabled = false
+            csv.enabled = false
         }
     }
 
@@ -216,8 +241,8 @@ release {
             'com.graphql-java-kickstart:graphql-spring-boot-test-autoconfigure',
             'com.graphql-java-kickstart:voyager-spring-boot-autoconfigure',
             'com.graphql-java-kickstart:voyager-spring-boot-starter',
-            'com.graphql-java-kickstart:playgroud-spring-boot-autoconfigure',
-            'com.graphql-java-kickstart:playgroud-spring-boot-starter'
+            'com.graphql-java-kickstart:playground-spring-boot-autoconfigure',
+            'com.graphql-java-kickstart:playground-spring-boot-starter'
     ]
 }
 

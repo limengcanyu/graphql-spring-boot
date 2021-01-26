@@ -1,40 +1,40 @@
 package graphql.kickstart.tools.boot;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import graphql.kickstart.tools.GraphQLQueryResolver;
 import graphql.kickstart.tools.SchemaParserDictionary;
 import graphql.schema.GraphQLSchema;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 
 /**
  * @author <a href="mailto:java.lang.RuntimeException@gmail.com">oEmbedler Inc.</a>
  */
-public class GraphQLJavaToolsAutoConfigurationTest extends AbstractAutoConfigurationTest {
+class GraphQLJavaToolsAutoConfigurationTest extends AbstractAutoConfigurationTest {
 
   public GraphQLJavaToolsAutoConfigurationTest() {
     super(GraphQLJavaToolsAutoConfiguration.class);
   }
 
   @Test
-  public void appContextLoads() {
+  void appContextLoads() {
     load(BaseConfiguration.class);
 
-    Assert.assertNotNull(this.getContext().getBean(GraphQLSchema.class));
+    assertThat(this.getContext().getBean(GraphQLSchema.class)).isNotNull();
   }
 
   @Test
-  public void schemaWithInterfaceLoads() {
+  void schemaWithInterfaceLoads() {
     load(InterfaceConfiguration.class);
 
-    Assert.assertNotNull(this.getContext().getBean(GraphQLSchema.class));
+    assertThat(this.getContext().getBean(GraphQLSchema.class)).isNotNull();
   }
 
   @Configuration
   static class BaseConfiguration {
+
     @Bean
     public Query query() {
       return new Query();

@@ -1,32 +1,38 @@
 package graphql.kickstart.spring.web.boot;
 
-import graphql.kickstart.execution.context.ContextSetting;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
-
 import static graphql.Assert.assertNotNull;
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(properties = {"graphql.servlet.mapping=/test", "graphql.servlet.contextSetting=PER_REQUEST_WITH_INSTRUMENTATION"})
-public class GraphQLServletPropertiesTest {
+import graphql.kickstart.execution.context.ContextSetting;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-    @Autowired
-    private GraphQLServletProperties properties;
+@ExtendWith(SpringExtension.class)
+@EnableConfigurationProperties(GraphQLServletProperties.class)
+@SpringBootTest(properties = {"graphql.servlet.mapping=/test",
+    "graphql.servlet.contextSetting=PER_REQUEST_WITH_INSTRUMENTATION"})
+class GraphQLServletPropertiesTest {
 
-    @Test
-    public void contains_custom_servlet_endpoint() {
-        String mapping = properties.getMapping();
-        assertNotNull(mapping);
-        assertEquals("/test", mapping);
-    }
+  @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
+  @Autowired
+  private GraphQLServletProperties properties;
 
-    @Test
-    public void containsCorrectContextSetting() {
-        ContextSetting contextSetting = properties.getContextSetting();
-        assertEquals(ContextSetting.PER_REQUEST_WITH_INSTRUMENTATION, contextSetting);
-    }
+  @Test
+  void contains_custom_servlet_endpoint() {
+    String mapping = properties.getMapping();
+    assertNotNull(mapping);
+    assertThat(mapping).isEqualTo("/test");
+  }
+
+  @Test
+  void containsCorrectContextSetting() {
+    ContextSetting contextSetting = properties.getContextSetting();
+    assertThat(contextSetting).isEqualTo(ContextSetting.PER_REQUEST_WITH_INSTRUMENTATION);
+  }
 }

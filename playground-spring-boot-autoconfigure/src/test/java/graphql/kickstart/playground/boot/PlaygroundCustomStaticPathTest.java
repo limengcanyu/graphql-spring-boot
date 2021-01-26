@@ -1,25 +1,25 @@
 package graphql.kickstart.playground.boot;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = PlaygroundTestConfig.class)
 @AutoConfigureMockMvc
 @TestPropertySource("classpath:application-playground-custom-static-path.properties")
-public class PlaygroundCustomStaticPathTest extends PlaygroundResourcesTestBase {
+class PlaygroundCustomStaticPathTest extends PlaygroundResourcesTestBase {
 
-    private static final String CUSTOM_CSS_URL = "/custom-static-path/static/css/index.css";
-    private static final String CUSTOM_SCRIPT_URL = "/custom-static-path/static/js/middleware.js";
-    private static final String CUSTOM_FAVICON_URL = "/custom-static-path/favicon.png";
-    private static final String CUSTOM_LOGO_URL = "/custom-static-path/logo.png";
+  private static final String CUSTOM_CSS_URL = "/custom-static-path/static/css/index.css";
+  private static final String CUSTOM_SCRIPT_URL = "/custom-static-path/static/js/middleware.js";
+  private static final String CUSTOM_FAVICON_URL = "/custom-static-path/favicon.png";
+  private static final String CUSTOM_LOGO_URL = "/custom-static-path/logo.png";
 
-    @Test
-    public void shouldLoadStaticResourcesFromCustomPath() throws Exception {
-        testPlaygroundResources(CUSTOM_CSS_URL, CUSTOM_SCRIPT_URL, CUSTOM_FAVICON_URL, CUSTOM_LOGO_URL);
-    }
+  @Test
+  void shouldLoadStaticResourcesFromCustomPath() throws Exception {
+    testPlaygroundResources(CUSTOM_CSS_URL, CUSTOM_SCRIPT_URL, CUSTOM_FAVICON_URL, CUSTOM_LOGO_URL);
+  }
 }

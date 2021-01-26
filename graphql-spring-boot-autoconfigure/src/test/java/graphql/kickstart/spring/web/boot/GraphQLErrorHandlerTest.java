@@ -1,23 +1,23 @@
 package graphql.kickstart.spring.web.boot;
 
-import graphql.kickstart.spring.web.boot.test.AbstractAutoConfigurationTest;
-import graphql.kickstart.tools.GraphQLQueryResolver;
-import graphql.kickstart.tools.SchemaParser;
 import com.graphql.spring.boot.test.TestUtils;
 import graphql.GraphQL;
 import graphql.GraphQLError;
 import graphql.kickstart.execution.GraphQLObjectMapper;
 import graphql.kickstart.execution.error.GraphQLErrorHandler;
 import graphql.kickstart.spring.error.ThrowableGraphQLError;
+import graphql.kickstart.spring.web.boot.test.AbstractAutoConfigurationTest;
+import graphql.kickstart.tools.GraphQLQueryResolver;
+import graphql.kickstart.tools.SchemaParser;
 import graphql.schema.GraphQLSchema;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 
-public class GraphQLErrorHandlerTest extends AbstractAutoConfigurationTest {
+class GraphQLErrorHandlerTest extends AbstractAutoConfigurationTest {
 
   private GraphQL gql;
   private GraphQLObjectMapper objectMapper;
@@ -26,7 +26,7 @@ public class GraphQLErrorHandlerTest extends AbstractAutoConfigurationTest {
     super(AnnotationConfigWebApplicationContext.class, GraphQLWebAutoConfiguration.class);
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     System.setProperty("graphql.tools.schemaLocationPattern", "graphql/error-handler-test.graphql");
     load(BaseConfiguration.class);
@@ -39,23 +39,28 @@ public class GraphQLErrorHandlerTest extends AbstractAutoConfigurationTest {
   }
 
   @Test
-  public void illegalArgumentExceptionShouldBeHandledConcretely() {
-    TestUtils.assertGraphQLError(gql, "query { illegalArgumentException }",
-            new ThrowableGraphQLError(new IllegalArgumentException("Illegal argument"), "Illegal argument"),
-            objectMapper);
+  void illegalArgumentExceptionShouldBeHandledConcretely() {
+    TestUtils.assertGraphQLError(
+        gql,
+        "query { illegalArgumentException }",
+        new ThrowableGraphQLError(new IllegalArgumentException("Some argument"),
+            "Custom illegal argument"),
+        objectMapper
+    );
   }
 
   @Test
-  public void illegalStateExceptionShouldBeHandledByCatchAll() {
+  void illegalStateExceptionShouldBeHandledByCatchAll() {
     TestUtils.assertGraphQLError(gql, "query { illegalStateException }",
-            new ThrowableGraphQLError(new IllegalStateException("Illegal state"), "Catch all handler"),
-            objectMapper);
+        new ThrowableGraphQLError(new IllegalStateException("Illegal state"), "Catch all handler"),
+        objectMapper);
   }
 
   @Configuration
   static class BaseConfiguration {
 
-    public class Query implements GraphQLQueryResolver {
+    public static class Query implements GraphQLQueryResolver {
+
       boolean illegalArgumentException() {
         throw new IllegalArgumentException("Illegal argument");
       }
@@ -65,12 +70,12 @@ public class GraphQLErrorHandlerTest extends AbstractAutoConfigurationTest {
       }
 
       @ExceptionHandler(IllegalArgumentException.class)
-      ThrowableGraphQLError handle(IllegalArgumentException e) {
-        return new ThrowableGraphQLError(e, "Illegal argument");
+      public ThrowableGraphQLError handle(IllegalArgumentException e) {
+        return new ThrowableGraphQLError(e, "Custom illegal argument");
       }
 
       @ExceptionHandler(Throwable.class)
-      GraphQLError handle(Throwable e) {
+      public GraphQLError handle(Throwable e) {
         return new ThrowableGraphQLError(e, "Catch all handler");
       }
 
@@ -82,9 +87,9 @@ public class GraphQLErrorHandlerTest extends AbstractAutoConfigurationTest {
       @Bean
       GraphQLSchema schema() {
         SchemaParser schemaParser = SchemaParser.newParser()
-                .file("graphql/error-handler-test.graphql")
-                .resolvers(queryResolver())
-                .build();
+            .file("graphql/error-handler-test.graphql")
+            .resolvers(queryResolver())
+            .build();
         return schemaParser.makeExecutableSchema();
       }
     }

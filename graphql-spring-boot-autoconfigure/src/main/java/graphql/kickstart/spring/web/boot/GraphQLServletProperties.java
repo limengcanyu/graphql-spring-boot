@@ -16,34 +16,58 @@
  * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
 package graphql.kickstart.spring.web.boot;
 
 import graphql.kickstart.execution.context.ContextSetting;
+import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
  * @author <a href="mailto:java.lang.RuntimeException@gmail.com">oEmbedler Inc.</a>
  */
+@Data
 @ConfigurationProperties(prefix = "graphql.servlet")
 public class GraphQLServletProperties {
 
-  private String mapping;
-
-  private boolean asyncModeEnabled = false;
-
+  private boolean enabled = true;
+  private boolean corsEnabled = true;
+  private String mapping = "/graphql";
   private boolean exceptionHandlersEnabled = false;
-
   private long subscriptionTimeout = 0;
-
   private ContextSetting contextSetting = ContextSetting.PER_QUERY_WITH_INSTRUMENTATION;
+  private long asyncTimeout = 30000;
+  private String tracingEnabled = "false";
+  private boolean actuatorMetrics;
+  private Integer maxQueryComplexity;
+  private Integer maxQueryDepth;
 
-  public String getMapping() {
-    return mapping != null ? mapping : "/graphql";
+  /**
+   * @return the servlet mapping, coercing into an appropriate wildcard for servlets (ending in /*)
+   */
+  public String getServletMapping() {
+    final String originalMapping = getMapping();
+    if (mappingIsAntWildcard()) {
+      return originalMapping.replaceAll("\\*$", "");
+    } else if (mappingIsServletWildcard()) {
+      return originalMapping;
+    } else {
+      return originalMapping.endsWith("/") ? originalMapping + "*" : originalMapping + "/*";
+    }
   }
 
-  public void setMapping(String mapping) {
-    this.mapping = mapping;
+  /**
+   * @return the servlet mapping, coercing into an appropriate wildcard for CORS, which uses ant
+   * matchers (ending in /**)
+   */
+  public String getCorsMapping() {
+    final String originalMapping = getMapping();
+    if (mappingIsAntWildcard()) {
+      return originalMapping;
+    } else if (mappingIsServletWildcard()) {
+      return originalMapping + "*";
+    } else {
+      return originalMapping.endsWith("/") ? originalMapping + "**" : originalMapping + "/**";
+    }
   }
 
   private boolean mappingIsServletWildcard() {
@@ -54,64 +78,4 @@ public class GraphQLServletProperties {
     return getMapping().endsWith("/**");
   }
 
-  /**
-   * @return the servlet mapping, coercing into an appropriate wildcard for servlets (ending in /*)
-   */
-  public String getServletMapping() {
-    final String mapping = getMapping();
-    if (mappingIsAntWildcard()) {
-      return mapping.replaceAll("\\*$", "");
-    } else if (mappingIsServletWildcard()) {
-      return mapping;
-    } else {
-      return mapping.endsWith("/") ? mapping + "*" : mapping + "/*";
-    }
-  }
-
-  /**
-   * @return the servlet mapping, coercing into an appropriate wildcard for CORS, which uses ant matchers (ending in
-   * /**)
-   */
-  public String getCorsMapping() {
-    final String mapping = getMapping();
-    if (mappingIsAntWildcard()) {
-      return mapping;
-    } else if (mappingIsServletWildcard()) {
-      return mapping + "*";
-    } else {
-      return mapping.endsWith("/") ? mapping + "**" : mapping + "/**";
-    }
-  }
-
-  public boolean isAsyncModeEnabled() {
-    return asyncModeEnabled;
-  }
-
-  public void setAsyncModeEnabled(boolean asyncModeEnabled) {
-    this.asyncModeEnabled = asyncModeEnabled;
-  }
-
-  public boolean isExceptionHandlersEnabled() {
-    return exceptionHandlersEnabled;
-  }
-
-  public void setExceptionHandlersEnabled(boolean exceptionHandlersEnabled) {
-    this.exceptionHandlersEnabled = exceptionHandlersEnabled;
-  }
-
-  public long getSubscriptionTimeout() {
-    return subscriptionTimeout;
-  }
-
-  public void setSubscriptionTimeout(long subscriptionTimeout) {
-    this.subscriptionTimeout = subscriptionTimeout;
-  }
-
-  public ContextSetting getContextSetting() {
-    return contextSetting;
-  }
-
-  public void setContextSetting(ContextSetting contextSetting) {
-    this.contextSetting = contextSetting;
-  }
 }

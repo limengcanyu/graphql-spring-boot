@@ -1,5 +1,7 @@
 package graphql.kickstart.tools.boot;
 
+import static java.util.Objects.nonNull;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.module.kotlin.KotlinModule;
@@ -19,6 +21,7 @@ import graphql.schema.GraphQLScalarType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.SchemaDirectiveWiring;
 import graphql.schema.visibility.GraphqlFieldVisibility;
+import graphql.schema.visibility.NoIntrospectionGraphqlFieldVisibility;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -35,54 +38,19 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import static java.util.Objects.nonNull;
-
 /**
  * @author Andrew Potter
  */
 @Slf4j
 @Configuration
 @ConditionalOnClass(SchemaParser.class)
-@AutoConfigureAfter({JacksonAutoConfiguration.class})
+@AutoConfigureAfter(JacksonAutoConfiguration.class)
 @EnableConfigurationProperties(GraphQLToolsProperties.class)
 public class GraphQLJavaToolsAutoConfiguration {
 
-  @Autowired(required = false)
-  private SchemaParserDictionary dictionary;
-
-  @Autowired(required = false)
-  private GraphQLScalarType[] scalars;
-
-  @Autowired(required = false)
-  private List<SchemaDirective> directives;
-
-  @Autowired(required = false)
-  private List<SchemaDirectiveWiring> directiveWirings;
-
-  @Autowired(required = false)
-  private List<GenericWrapper> genericWrappers;
-
-  @Autowired(required = false)
-  private ObjectMapperConfigurer objectMapperConfigurer;
-
-  @Autowired(required = false)
-  private List<ProxyHandler> proxyHandlers;
-
-  @Autowired(required = false)
-  private CoroutineContextProvider coroutineContextProvider;
-
-  @Autowired(required = false)
-  private List<TypeDefinitionFactory> typeDefinitionFactories;
-
-  @Autowired(required = false)
-  private GraphqlFieldVisibility fieldVisibility;
-
-  @Autowired
-  private GraphQLToolsProperties props;
-
   @Bean
   @ConditionalOnMissingBean
-  public SchemaStringProvider schemaStringProvider() {
+  public SchemaStringProvider schemaStringProvider(GraphQLToolsProperties props) {
     return new ClasspathResourceSchemaStringProvider(props.getSchemaLocationPattern());
   }
 
@@ -90,7 +58,13 @@ public class GraphQLJavaToolsAutoConfiguration {
   @ConditionalOnMissingBean
   @ConfigurationProperties("graphql.tools.schema-parser-options")
   public SchemaParserOptions.Builder optionsBuilder(
-      @Autowired(required = false) PerFieldObjectMapperProvider perFieldObjectMapperProvider
+      @Autowired(required = false) PerFieldObjectMapperProvider perFieldObjectMapperProvider,
+      @Autowired(required = false) List<GenericWrapper> genericWrappers,
+      @Autowired(required = false) ObjectMapperConfigurer objectMapperConfigurer,
+      @Autowired(required = false) List<ProxyHandler> proxyHandlers,
+      @Autowired(required = false) CoroutineContextProvider coroutineContextProvider,
+      @Autowired(required = false) List<TypeDefinitionFactory> typeDefinitionFactories,
+      @Autowired(required = false) GraphqlFieldVisibility fieldVisibility
   ) {
     SchemaParserOptions.Builder optionsBuilder = SchemaParserOptions.newOptions();
 
@@ -106,7 +80,8 @@ public class GraphQLJavaToolsAutoConfiguration {
       proxyHandlers.forEach(optionsBuilder::addProxyHandler);
     }
 
-    Optional.ofNullable(coroutineContextProvider).ifPresent(optionsBuilder::coroutineContextProvider);
+    Optional.ofNullable(coroutineContextProvider)
+        .ifPresent(optionsBuilder::coroutineContextProvider);
 
     if (typeDefinitionFactories != null) {
       typeDefinitionFactories.forEach(optionsBuilder::typeDefinitionFactory);
@@ -123,7 +98,11 @@ public class GraphQLJavaToolsAutoConfiguration {
   public SchemaParser schemaParser(
       List<GraphQLResolver<?>> resolvers,
       SchemaStringProvider schemaStringProvider,
-      SchemaParserOptions.Builder optionsBuilder
+      SchemaParserOptions.Builder optionsBuilder,
+      @Autowired(required = false) SchemaParserDictionary dictionary,
+      @Autowired(required = false) GraphQLScalarType[] scalars,
+      @Autowired(required = false) List<SchemaDirective> directives,
+      @Autowired(required = false) List<SchemaDirectiveWiring> directiveWirings
   ) throws IOException {
     SchemaParserBuilder builder = new SchemaParserBuilder();
     if (nonNull(dictionary)) {
@@ -166,5 +145,13 @@ public class GraphQLJavaToolsAutoConfiguration {
   @ConditionalOnMissingBean({GraphQLSchema.class, GraphQLSchemaProvider.class})
   public GraphQLSchema graphQLSchema(SchemaParser schemaParser) {
     return schemaParser.makeExecutableSchema();
+  }
+
+  @Bean
+  @ConditionalOnProperty(value = "graphql.tools.introspection-enabled", havingValue = "false")
+  GraphqlFieldVisibility disableIntrospection() {
+    log.warn("GraphQL introspection query disabled! This puts your server in contravention of the "
+        + "GraphQL specification and expectations of most clients, so use this option with caution");
+    return new NoIntrospectionGraphqlFieldVisibility();
   }
 }
